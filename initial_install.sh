@@ -15,12 +15,10 @@ echo "Are you going to game? (y/n)"
 read -r game
 echo "Are you going to program? (y/n)"
 read -r program
-echo "Do you want to copy desktop settings."
+echo "Do you want to copy desktop settings. (config files) (y/n)"
 read -r desktop
-if [ "$desktop" == "y" ]; then
-  echo "Do you want polybar? (Unstable) (y/n)"
-  read -r polybar
-fi
+echo "Do you want polybar? (Unstable) (y/n)"
+read -r polybar
 
 
 #update repository list
@@ -30,8 +28,7 @@ sudo apt update
 sudo apt install aptitude -y
 
 
-#Summary of each program in this list. All of the following is installed no matter what.
-
+#~~~Summary of each program in this list. All of the following is installed no matter what.
 #Neofetch shows the OS, kernel, theme, processor, ram, and other important info
 #Build-essentials is for C++ developement and includes make
 #Shellcheck is a command you can run to ensure scripts are written well (compiler for .sh)
@@ -42,12 +39,18 @@ sudo apt install aptitude -y
 sudo aptitude install neofetch build-essential shellcheck wine64 git firefox -y 
 sudo snap install --classic code
 
+#Spotify 
+curl -sS https://download.spotify.com/debian/pubkey.gpg | sudo apt-key add - 
+echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+sudo apt-get update && sudo apt-get install spotify-client
+
 
 #Laptop check
 if [ "$lap" == "y" ]; then
   sudo aptitude install tlp -y
   cd /usr/share/pulseaudio/alsa-mixer/paths/
   sed -i.bkp '/\[Element PCM\]/i \[Element Master\]\nswitch = mute\nvolume = ignore' analog-output.conf.common
+  pulseaudio -k
   cd $HOME
 fi
 
@@ -75,6 +78,7 @@ fi
 
 #Programmer check
 if [ "$program" == "y" ]; then
+  #Basic installs
   sudo aptitude install cmake -y
 
   #Jetbrains toolkit
@@ -118,17 +122,30 @@ if [ "$program" == "y" ]; then
   echo ""
   rm ${DEST}
   echo  -e "\e[32mDone.\e[39m"
+
+  #DotNet install
+  wget -q https://packages.microsoft.com/config/ubuntu/19.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+  sudo dpkg -i packages-microsoft-prod.deb
+
+  sudo apt-get update
+  sudo apt-get install apt-transport-https
+  sudo apt-get update
+  sudo apt-get install dotnet-sdk-3.1
+
+  sudo apt-get update
+  sudo apt-get install apt-transport-https
+  sudo apt-get update
+  sudo apt-get install aspnetcore-runtime-3.1
+
+  sudo apt-get update
+  sudo apt-get install apt-transport-https
+  sudo apt-get update
+  sudo apt-get install dotnet-runtime-3.1
 fi
 
 
 #Desktop environment setup check
 if [ "$desktop" == "y" ]; then
-  #GNOME desktop environment extra
-  if [ "$(sudo aptitude show gnome-shell | grep -c 'State: installed')" -eq 1 ]; then
-    echo "Installing gnome tweaks"
-    sudo aptitude install gnome-tweak-tool -y
-  fi 
-
   #Confirm we are in the home directory for config git
   if [ "$(pwd)" != "$HOME" ]; then
     cd || echo "This script needs to be run in $HOME" && exit
@@ -136,27 +153,31 @@ if [ "$desktop" == "y" ]; then
 
   git clone --bare https://xeryus-velasco@github.com/xeryus-velasco/dotfiles.git "$HOME/.dotfiles"
   git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" pull
-
-
-  if [ "$polybar" == "y" ]; then
-    #Polybar setup
-    mkdir self_compile
-    cd self_compile || exit
-    sudo aptitude install python3 python3-sphinx pkg-config libcairo2-dev libxcb1-dev libxcb-util0-dev libxcb-randr0-dev libxcb-composite0-dev python-xcbgen xcb-proto libxcb-image0-dev libxcbewmh-dev libxcbicccm4-dev -y
-    sudo aptitude markauto python python3
-    sudo aptitude install libiw-dev libpulse-dev -y
-    if [ ! -d polybar ]; then
-        git clone https://github.com/polybar/polybar.git
-        cd polybar || exit
-    else
-        cd polybar || exit
-        git pull
-    fi
-
-    ./build.sh -j -n -p -A
-    cd || exit
-  fi
-  
-
-  firefox -new-tab "https://support.system76.com/articles/customize-gnome/"
 fi
+
+if [ "$polybar" == "y" ]; then
+  #Polybar setup
+  mkdir self_compile
+  cd self_compile || exit
+  sudo aptitude install python3 python3-sphinx pkg-config libcairo2-dev libxcb1-dev libxcb-util0-dev libxcb-randr0-dev libxcb-composite0-dev python-xcbgen xcb-proto libxcb-image0-dev libxcbewmh-dev libxcbicccm4-dev -y
+  sudo aptitude markauto python python3
+  sudo aptitude install libiw-dev libpulse-dev -y
+  if [ ! -d polybar ]; then
+      git clone https://github.com/polybar/polybar.git
+      cd polybar || exit
+  else
+      cd polybar || exit
+      git pull
+  fi
+
+  ./build.sh -j -n -p -A
+  cd || exit
+fi
+
+#GNOME desktop environment extra
+if [ "$(sudo aptitude show gnome-shell | grep -c 'State: installed')" -eq 1 ]; then
+  echo "Installing gnome tweaks"
+  sudo aptitude install gnome-tweak-tool -y
+fi 
+
+firefox -new-tab "https://support.system76.com/articles/customize-gnome/"
