@@ -46,29 +46,29 @@ sudo apt-get update && sudo apt-get install spotify-client
 
 
 #Laptop check
-if [ "$lap" == "y" ]; then
+if [ "$lap" = "y" ]; then
   sudo aptitude install tlp -y
-  cd /usr/share/pulseaudio/alsa-mixer/paths/
+  cd /usr/share/pulseaudio/alsa-mixer/paths/ || exit
   sed -i.bkp '/\[Element PCM\]/i \[Element Master\]\nswitch = mute\nvolume = ignore' analog-output.conf.common
   pulseaudio -k
-  cd $HOME
+  cd "$HOME" || exit
 fi
 
 
 #Editor check
 #Vim is a terminal text editor that is robust
 #Emacs is better than vim but not really
-if [ "$editor" == "v" ]; then
+if [ "$editor" = "v" ]; then
   sudo aptitude install vim -y
-elif [ "$editor" == "e" ]; then
+elif [ "$editor" = "e" ]; then
   sudo aptitude install emacs -y
-elif [ "$editor" == "b" ]; then
+elif [ "$editor" = "b" ]; then
   sudo aptitude install emacs vim -y
 fi
 
 
 #Game check
-if [ "$game" == "y" ]; then
+if [ "$game" = "y" ]; then
   #install steam and lutris
   sudo add-apt-repository -y multiverse
   sudo add-apt-repository -y ppa:lutris-team/lutris
@@ -77,51 +77,9 @@ fi
 
 
 #Programmer check
-if [ "$program" == "y" ]; then
+if [ "$program" = "y" ]; then
   #Basic installs
   sudo aptitude install cmake -y
-
-  #Jetbrains toolkit
-  [ $(id -u) != "0" ] && exec sudo "$0" "$@"
-  echo -e " \e[94mInstalling Jetbrains Toolbox\e[39m"
-  echo ""
-
-  function getLatestUrl() {
-  USER_AGENT=('User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36')
-
-  URL=$(curl 'https://data.services.jetbrains.com//products/releases?code=TBA&latest=true&type=release' -H 'Origin: https://www.jetbrains.com' -H 'Accept-Encoding: gzip, deflate, br' -H 'Accept-Language: en-US,en;q=0.8' -H "${USER_AGENT[@]}" -H 'Accept: application/json, text/javascript, */*; q=0.01' -H 'Referer: https://www.jetbrains.com/toolbox/download/' -H 'Connection: keep-alive' -H 'DNT: 1' --compressed | grep -Po '"linux":.*?[^\\]",' | awk -F ':' '{print $3,":"$4}'| sed 's/[", ]//g')
-  echo $URL
-  }
-  getLatestUrl
-
-  FILE=$(basename ${URL})
-  DEST=$PWD/$FILE
-
-  echo ""
-  echo -e "\e[94mDownloading Toolbox files \e[39m"
-  echo ""
-  wget -cO  ${DEST} ${URL} --read-timeout=5 --tries=0
-  echo ""
-  echo -e "\e[32mDownload complete!\e[39m"
-  echo ""
-  DIR="/opt/jetbrains-toolbox"
-  echo ""
-  echo  -e "\e[94mInstalling to $DIR\e[39m"
-  echo ""
-  if mkdir ${DIR}; then
-      tar -xzf ${DEST} -C ${DIR} --strip-components=1
-  fi
-
-  chmod -R +rwx ${DIR}
-  touch ${DIR}/jetbrains-toolbox.sh
-  echo "#!/bin/bash" >> $DIR/jetbrains-toolbox.sh
-  echo "$DIR/jetbrains-toolbox" >> $DIR/jetbrains-toolbox.sh
-
-  ln -s ${DIR}/jetbrains-toolbox.sh /usr/local/bin/jetbrains-toolbox
-  chmod -R +rwx /usr/local/bin/jetbrains-toolbox
-  echo ""
-  rm ${DEST}
-  echo  -e "\e[32mDone.\e[39m"
 
   #DotNet install
   wget -q https://packages.microsoft.com/config/ubuntu/19.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
@@ -141,11 +99,22 @@ if [ "$program" == "y" ]; then
   sudo apt-get install apt-transport-https
   sudo apt-get update
   sudo apt-get install dotnet-runtime-3.1
+
+  #Mono install
+  sudo apt update
+  sudo apt install dirmngr gnupg apt-transport-https ca-certificates
+
+  sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+
+  sudo sh -c 'echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" > /etc/apt/sources.list.d/mono-official-stable.list'
+
+  sudo apt update
+  sudo apt install mono-complete
 fi
 
 
 #Desktop environment setup check
-if [ "$desktop" == "y" ]; then
+if [ "$desktop" = "y" ]; then
   #Confirm we are in the home directory for config git
   if [ "$(pwd)" != "$HOME" ]; then
     cd || echo "This script needs to be run in $HOME" && exit
@@ -155,7 +124,7 @@ if [ "$desktop" == "y" ]; then
   git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" pull
 fi
 
-if [ "$polybar" == "y" ]; then
+if [ "$polybar" = "y" ]; then
   #Polybar setup
   mkdir self_compile
   cd self_compile || exit
