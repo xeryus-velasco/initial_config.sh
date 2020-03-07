@@ -124,6 +124,7 @@ if [ "$desktop" = "y" ]; then
   git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" pull
 fi
 
+
 if [ "$polybar" = "y" ]; then
   #Polybar setup
   mkdir self_compile
@@ -143,10 +144,16 @@ if [ "$polybar" = "y" ]; then
   cd || exit
 fi
 
+
 #GNOME desktop environment extra
 if [ "$(sudo aptitude show gnome-shell | grep -c 'State: installed')" -eq 1 ]; then
   echo "Installing gnome tweaks"
   sudo aptitude install gnome-tweak-tool -y
+  firefox -new-tab "https://support.system76.com/articles/customize-gnome/"
+  firefox -new-tab "https://extensions.gnome.org/extension/15/alternatetab/"
+  firefox -new-tab "https://extensions.gnome.org/extension/517/caffeine/"
+  firefox -new-tab "https://extensions.gnome.org/extension/945/cpu-power-manager/"
+  firefox -new-tab "https://extensions.gnome.org/extension/1160/dash-to-panel/"
+  firefox -new-tab "https://extensions.gnome.org/extension/615/appindicator-support/"
+  firefox -new-tab "https://extensions.gnome.org/extension/352/middle-click-to-close-in-overview/"
 fi 
-
-firefox -new-tab "https://support.system76.com/articles/customize-gnome/"
